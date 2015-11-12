@@ -13,23 +13,23 @@
 #define rxPin 10
 #define txPin 11
 
-SoftwareSerial mySerial(rxPin, txPin); // RX / TX of the arduino
+SoftwareSerial outSerial(rxPin, txPin); // RX / TX of the arduino
 char inBuffer[100];
 byte index = 0;
 
 void setup() {
   Serial.begin(9600);   
   Serial.println("Arduino Bluetooth Universal Remote Server");
-  mySerial.begin(9600);
-  mySerial.println("AT");
+  outSerial.begin(9600);
+  outSerial.println("AT");
 
 }
 
 void loop() {
 
   //Incoming BT data stream
-  while (mySerial.available() >0) {
-   char aChar = mySerial.read();
+  while (outSerial.available() >0) {
+   char aChar = outSerial.read();
      if(aChar == ':')
      {
         processIncomingCommand();
@@ -46,18 +46,21 @@ void loop() {
   }
 
     
-  //Outbound BT stream 
+  //Manual outbound BT stream 
   while (Serial.available()) {
     char myChar = Serial.read();
     Serial.print(myChar); //echo
-    mySerial.print(myChar);
+    outSerial.print(myChar);
   }
 }
 
 void processIncomingCommand() {
-  Serial.println("Command recieved:");
+  Serial.print("Command recieved: ");
+  int messageId = atoi(inBuffer);
   if (strstr(inBuffer, "ping") != 0) {
     Serial.println("Ping");
+    
+    sendReply(messageId,"ping");
     
   } else if (strstr(inBuffer, "record") != 0) {
     Serial.println("Record");
@@ -71,4 +74,11 @@ void processIncomingCommand() {
   } else {
     Serial.println("Unknown command");
   }
+}
+
+//Send an outbound message over BLE with message ID
+void sendReply(int messageId, char *reply) {
+      outSerial.print( messageId);
+      outSerial.print( "@");
+      outSerial.print(reply);
 }
