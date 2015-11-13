@@ -38,11 +38,18 @@ SoftwareSerial outSerial(rxPin, txPin); // RX / TX of the arduino
 char inBuffer[100];
 byte index = 0;
 
+//Wrapper for IRRemote services
+RemoteCore remoteCore;
+
+String version="1.0.1SNAPSHOT";
+
 void setup() {
   Serial.begin(9600);   
   Serial.println("Arduino Bluetooth Universal Remote Server");
   outSerial.begin(9600);
   outSerial.println("AT");
+  
+  remoteCore.begin();
 
 }
 
@@ -51,7 +58,7 @@ void loop() {
   //Incoming BT data stream
   while (outSerial.available() >0) {
    char aChar = outSerial.read();
-     if(aChar == ':')
+     if(aChar == ':') //All commands terminated by :
      {
         processIncomingCommand();
         
@@ -73,6 +80,9 @@ void loop() {
     Serial.print(myChar); //echo
     outSerial.print(myChar);
   }
+  
+  //Check for incoming IR traffic
+  remoteCore.readIRCode();
 }
 
 void processIncomingCommand() {
@@ -81,16 +91,32 @@ void processIncomingCommand() {
   if (strstr(inBuffer, "ping") != 0) {
     Serial.println("Ping");
     
-    sendReply(messageId,"ping");
+    sendReply(messageId,"OK");
     
   } else if (strstr(inBuffer, "record") != 0) {
     Serial.println("Record");
+    remoteCore.resetLastCode(); 
+    sendReply(messageId,"OK");
     
   } else if (strstr(inBuffer, "getcode") != 0) {
     Serial.println("Get Code");
+    decode_results results = remoteCore.lastDecodedCode();
     
+     outSerial.print( messageId);
+     outSerial.print( "@");
+
+     outSerial.print(results.decode_type);
+     outSerial.print("/");
+     outSerial.print(results.value, HEX);
+     outSerial.print("/");
+     outSerial.print(results.address, HEX);
+     outSerial.print("/");
+     outSerial.println(results.bits);    
+   
   } else if (strstr(inBuffer, "sendcode") != 0) {
     Serial.println("Send Code");
+//TODO: send code
+Serial.println(inBuffer);
     
   } else {
     Serial.println("Unknown command");
