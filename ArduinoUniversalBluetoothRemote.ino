@@ -47,7 +47,6 @@ void setup() {
   Serial.begin(9600);   
   Serial.println("Arduino Bluetooth Universal Remote Server");
   outSerial.begin(9600);
-  outSerial.println("AT");
   
   remoteCore.begin();
 
@@ -90,7 +89,6 @@ void processIncomingCommand() {
   int messageId = atoi(inBuffer);
   if (strstr(inBuffer, "ping") != 0) {
     Serial.println("Ping");
-    
     sendReply(messageId,"OK");
     
   } else if (strstr(inBuffer, "record") != 0) {
@@ -111,11 +109,12 @@ void processIncomingCommand() {
      outSerial.print("/");
      outSerial.print(results.address, HEX);
      outSerial.print("/");
-     outSerial.println(results.bits);    
+     outSerial.print(results.bits);
+     outSerial.print(";");
    
   } else if (strstr(inBuffer, "sendcode") != 0) {
     Serial.println("Send Code");
-//TODO: send code
+//TODO: parse and send code
 Serial.println(inBuffer);
     
   } else {
@@ -128,4 +127,5 @@ void sendReply(int messageId, char *reply) {
       outSerial.print( messageId);
       outSerial.print( "@");
       outSerial.print(reply);
+      outSerial.print(";");
 }
