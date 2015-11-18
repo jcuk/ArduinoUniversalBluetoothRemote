@@ -86,6 +86,7 @@ void loop() {
 
 void processIncomingCommand() {
   Serial.print("Command recieved: ");
+  Serial.println(inBuffer);
   int messageId = atoi(inBuffer);
   if (strstr(inBuffer, "ping") != 0) {
     Serial.println("Ping");
@@ -110,12 +111,43 @@ void processIncomingCommand() {
      outSerial.print(results.address, HEX);
      outSerial.print("/");
      outSerial.print(results.bits);
-     outSerial.print(";");
+     outSerial.print(":");
    
   } else if (strstr(inBuffer, "sendcode") != 0) {
     Serial.println("Send Code");
-//TODO: parse and send code
-Serial.println(inBuffer);
+
+    char *pch = strtok(inBuffer, "?"); 
+    pch = strtok(0, "/");
+    unsigned long value = strtol(pch, 0, 16);
+    pch = strtok(0, "/");
+    unsigned long address = strtol(pch, 0, 16);
+    pch = strtok(0, "/");
+    unsigned int decodeType = atoi(pch);
+    pch = strtok(0, "/");
+    unsigned int numBits = atoi(pch);
+    pch = strtok(0, "/");
+    unsigned int repeat = atoi(pch);
+    pch = strtok(0, "/");
+    boolean toggle = atoi(pch);
+
+    Serial.println("-----");              
+    Serial.println(inBuffer);
+    Serial.println("-----");
+
+    Serial.println(value, HEX);
+    Serial.println(address, HEX);
+    Serial.println(decodeType);
+    Serial.println(numBits);
+    Serial.println(repeat);
+    Serial.println(toggle);
+      
+    remoteCore.sendCode(
+        decodeType,
+        value,
+        address,
+        numBits,
+        repeat,
+        toggle);
     
   } else {
     Serial.println("Unknown command");
@@ -127,5 +159,5 @@ void sendReply(int messageId, char *reply) {
       outSerial.print( messageId);
       outSerial.print( "@");
       outSerial.print(reply);
-      outSerial.print(";");
+      outSerial.print(":");
 }
